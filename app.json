@@ -1,0 +1,8 @@
+{
+  "name": "AnySnap backend",
+  "description": "AnySnap on Heroku.",
+  "image": "heroku/python",
+  "repository": "https://github.com/7kfpun/anysnap-backend",
+  "keywords": ["python", "django" ],
+  "addons": [ "heroku-postgresql" ]
+}
