@@ -1,5 +1,16 @@
+# Django
 Django==1.10.1
 dj-database-url==0.4.1
 gunicorn==19.6.0
 psycopg2==2.6.2
 whitenoise==3.2.1
+django-debug-toolbar==1.5
+django-extensions==1.7.4
+Werkzeug==0.11.11
+django-graphiql==0.4.4
+graphene-django>=1.0.dev
+django-filter
+
+# Worker
+celery==3.1.23
+redis==2.10.5

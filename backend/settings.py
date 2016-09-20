@@ -40,8 +40,18 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
+    'django_graphiql',
+    'graphene_django',
+
     'core',
+
+    'django_extensions',
 ]
+
+GRAPHENE = {
+    'SCHEMA': 'core.schema.schema'
+}
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -84,6 +94,7 @@ DATABASES = {
     }
 }
 
+AUTH_USER_MODEL = 'core.CustomUser'
 
 # Password validation
 # https://docs.djangoproject.com/en/1.10/ref/settings/#auth-password-validators
