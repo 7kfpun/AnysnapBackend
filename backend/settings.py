@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
+    'djcelery',
     'django_graphiql',
     'graphene_django',
 
@@ -135,6 +136,17 @@ USE_TZ = True
 # Update database configuration with $DATABASE_URL.
 db_from_env = dj_database_url.config(conn_max_age=500)
 DATABASES['default'].update(db_from_env)
+
+BROKER_URL = os.getenv('REDIS_URL', 'redis://localhost:6379')
+BROKER_POOL_LIMIT = 2
+BROKER_CONNECTION_MAX_RETRIES = None
+
+CELERY_TASK_SERIALIZER = "json"
+CELERY_ACCEPT_CONTENT = ["json", "msgpack"]
+CELERYBEAT_SCHEDULER = 'djcelery.schedulers.DatabaseScheduler'
+
+import djcelery  # noqa
+djcelery.setup_loader()
 
 # Honor the 'X-Forwarded-Proto' header for request.is_secure()
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')

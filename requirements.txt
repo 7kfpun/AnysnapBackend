@@ -10,6 +10,7 @@ Werkzeug==0.11.11
 django-graphiql==0.4.4
 graphene-django>=1.0.dev
 django-filter
+django-celery==3.1.17
 
 # Worker
 celery==3.1.23
