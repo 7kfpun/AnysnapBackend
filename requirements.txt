@@ -10,6 +10,7 @@ Werkzeug==0.11.11
 django-graphiql==0.4.4
 graphene-django>=1.0.dev
 django-filter
+requests==2.11.1
 -e git://github.com/celery/django-celery@1612037675a25457de067a5ac0d6d511736e130e#egg=django-celery
 
 # Worker
