@@ -25,7 +25,18 @@ def connection_for_type(_type):
 
 class UserNode(DjangoObjectType):
 
-    """UserNode."""
+    """UserNode.
+
+    query {
+        allUsers {
+            edges {
+                node {
+                    id
+                }
+            }
+        }
+    }
+    """
 
     class Meta:
         model = CustomUser
@@ -40,7 +51,7 @@ class UserNode(DjangoObjectType):
             'password',
             'username',
         )
-        filter_fields = ('id', )
+        #  filter_fields = ('id')
         interfaces = (relay.Node, )
 
 UserNode.Connection = connection_for_type(UserNode)
@@ -53,6 +64,7 @@ class ImageNode(DjangoObjectType):
     class Meta:
         model = Image
         interfaces = (relay.Node, )
+        filter_fields = ['id', 'user']
 
 
 class TagNode(DjangoObjectType):
@@ -103,7 +115,8 @@ class CreateImage(relay.ClientIDMutation):
 
     class Input:
         url = graphene.String(required=True)
-        user_id = graphene.String(required=True)
+        original_url = graphene.String(required=True)
+        user_id = graphene.String()
         user_email = graphene.String()
 
     image = graphene.Field(ImageNode)
@@ -113,13 +126,27 @@ class CreateImage(relay.ClientIDMutation):
     def mutate_and_get_payload(cls, input, context, info):
         """mutate_and_get_payload."""
         url = input.get('url')
+        original_uri = input.get('original_uri')
         user_id = input.get('user_id')
         user_email = input.get('user_email')
-        user, _ = CustomUser.objects.get_or_create(id=user_id)
-        if user_email:
-            user.email = user_email
-            user.save()
-        image = Image.objects.create(url=url, user=user)
+
+        if user_id:
+            if user_email:
+                user, _ = CustomUser.objects.get_or_create(id=user_id, email=user_email)
+            else:
+                user, _ = CustomUser.objects.get_or_create(id=user_id)
+
+            image = Image.objects.create_analytics(
+                url=url,
+                original_uri=original_uri,
+                user=user,
+            )
+        else:
+            image = Image.objects.create_analytics(
+                url=url,
+                original_uri=original_uri,
+            )
+
         return CreateImage(image=image, ok=bool(image.id))
 
 

@@ -1,2 +1,2 @@
 web: gunicorn backend.wsgi --log-file -
-worker: celery worker --app=tasks.app
+worker: python manage.py celery worker --loglevel=info

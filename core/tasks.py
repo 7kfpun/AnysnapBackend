@@ -5,7 +5,7 @@ from io import BytesIO
 import requests
 from celery import task
 
-from .models import CustomUser, Tag
+from .models import Image, Tag
 
 
 @task(bind=True)
@@ -22,27 +22,41 @@ def add(x, y):
 
 
 @task
-def analyze(url):
+def analyze(url=None, image_pk=None):
     """Analyze."""
     logging.info('Analyze image')
-    microsoft_cognitive.apply_async((url,))
+    if url is None and image_pk is None:
+        return True
+
+    if url is None:
+        image = Image.objects.get(id=image_pk)
+        url = image.url
+
+    microsoft_cognitive.delay(image_pk=image.pk)
 
     response = requests.get(url)
     image_byte = BytesIO(response.content).read()
     image_content = base64.b64encode(image_byte).decode('utf-8')
 
     # Async
-    google_vision.apply_async((url, image_content,))
+    google_vision.delay(url=url, image_content=image_content)
 
     # Sync
-    craftar_search(url, image_byte)
+    # craftar_search(url, image_byte)
     return True
 
 
 @task
-def craftar_search(url=None, image_byte=None):
+def craftar_search(url=None, image_pk=None, image_byte=None):
     """Update."""
     logging.info('CraftAR search')
+    if url is None and image_pk is None and image_byte is None:
+        return True
+
+    if url is None:
+        image = Image.objects.get(id=image_pk)
+        url = image.url
+
     if not image_byte:
         response = requests.get(url)
         image_byte = BytesIO(response.content).read()
@@ -65,9 +79,16 @@ def craftar_search(url=None, image_byte=None):
 
 
 @task
-def google_vision(url=None, image_content=None, image_pk=None, user_pk=None):
+def google_vision(url=None, image_pk=None, image_content=None):
     """Google vision."""
     logging.info('Google vision')
+    if url is None and image_pk is None and image_content is None:
+        return True
+
+    if url is None:
+        image = Image.objects.get(id=image_pk)
+        url = image.url
+
     if not image_content:
         response = requests.get(url)
         image_byte = BytesIO(response.content).read()
@@ -114,20 +135,21 @@ def google_vision(url=None, image_content=None, image_pk=None, user_pk=None):
                 locale='en',
                 payload=tag_data,
             )
-            if user_pk:
-                try:
-                    user = CustomUser.objects.get(foo='bar')
-                    tag.user = user
-                except CustomUser.DoesNotExist:
-                    pass
             tag.save()
     return request.json()
 
 
 @task
-def microsoft_cognitive(url, image_pk, user_pk=None):
+def microsoft_cognitive(url=None, image_pk=None):
     """Microsoft cognitive."""
     logging.info('Microsoft cognitive')
+    if url is None and image_pk is None:
+        return True
+
+    if url is None:
+        image = Image.objects.get(id=image_pk)
+        url = image.url
+
     headers = {
         'Content-Type': 'application/json',
         'Ocp-Apim-Subscription-Key': '5f9521ea68574897b1bafc0c015f7382',
@@ -155,12 +177,6 @@ def microsoft_cognitive(url, image_pk, user_pk=None):
                         locale='en',
                         payload=tag_data,
                     )
-                    if user_pk:
-                        try:
-                            user = CustomUser.objects.get(foo='bar')
-                            tag.user = user
-                        except CustomUser.DoesNotExist:
-                            pass
                     tag.save()
 
             elif 'logoAnnotations' in response_data:
@@ -172,7 +188,7 @@ def microsoft_cognitive(url, image_pk, user_pk=None):
     return result
 
 
-@task
-def sync_firebase():
-    """Sync firebase."""
-    return True
+# @task
+# def sync_firebase():
+#     """Sync firebase."""
+#     return True
