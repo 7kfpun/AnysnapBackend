@@ -1,5 +1,6 @@
-import uuid
 import json
+import uuid
+from itertools import groupby
 
 from django.contrib.auth.models import AbstractUser
 from django.contrib.postgres.fields import JSONField
@@ -69,18 +70,23 @@ class Image(models.Model):
 
     def get_results(self):
         """Get results."""
-        return {
-            "tags": [{
-                "name": tag.name,
-                "score": tag.score,
-            } for tag in self.tags.filter(is_valid=True)],
-            "results": [{
-                "name": result.name,
-                "category": result.category,
-                "service": result.service,
-                "feature": result.feature,
-            } for result in self.results.filter(is_valid=True)]
-        }
+        results = [{
+            "name": result.name,
+            "category": result.get_category_display(),
+            "service": result.get_service_display(),
+            "feature": result.get_feature_display(),
+            "payload": json.loads(result.payload) if result.payload else result.payload,
+        } for result in self.results.filter(is_valid=True)]
+
+        def keyfn(x):
+            return x['feature'].lower()
+        data = dict((k, list(g)) for k, g in groupby(sorted(results, key=keyfn), keyfn))
+
+        data["tag"] = [{
+            "name": tag.name,
+            "score": tag.score,
+        } for tag in self.tags.filter(is_valid=True)],
+        return data
 
     def image_tag(self):
         """Image tag."""
