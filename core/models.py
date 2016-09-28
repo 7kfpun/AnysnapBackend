@@ -8,6 +8,17 @@ from django.core.cache import cache
 from django.db import models
 from django.utils.html import format_html
 
+import pyrebase
+
+config = {
+    'apiKey': 'KKNRgC46ZvryQKlseI4DpONiUhmNPDh2YDwfSPzO',
+    'authDomain': 'frontn-anysnap.firebaseapp.com',
+    'databaseURL': 'https://frontn-anysnap.firebaseio.com',
+    'storageBucket': 'frontn-anysnap-images',
+}
+
+firebase = pyrebase.initialize_app(config)
+
 
 class CustomUser(AbstractUser):
 
@@ -87,6 +98,12 @@ class Image(models.Model):
             "score": tag.score,
         } for tag in self.tags.filter(is_valid=True)],
         return data
+
+    def sync_firebase(self):
+        """Sync firebase."""
+        db = firebase.database()
+        db.child("results").child(self.pk_str).set(self.get_results())
+        return True
 
     def image_tag(self):
         """Image tag."""
@@ -186,8 +203,13 @@ class Result(models.Model):
     TEXT = 'TE'
     FACE = 'FA'
 
+    # Google
     LOGO = 'LO'
 
+    # Craftar
+    RECOGNITION = 'RE'
+
+    # Others
     MAP = 'MA'
     PHONE = 'PH'
     URL = 'UR'
@@ -200,6 +222,8 @@ class Result(models.Model):
         (FACE, 'Face'),
 
         (LOGO, 'Logo'),
+
+        (RECOGNITION, 'Recognition'),
 
         (MAP, 'Map'),
         (PHONE, 'Phone'),

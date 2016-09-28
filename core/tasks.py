@@ -82,6 +82,7 @@ def craftar_search(url=None, image_pk=None, image_byte=None, save=False):
                 name=craftar_data.get('name'),
                 category=Result.AI,
                 service=Result.CRAFTAR,
+                feature=Result.RECOGNITION,
             )
             if os.getenv('DATABASE_URL', '').startswith('postgres'):
                 result.payload = json.dumps(craftar_data)
@@ -317,7 +318,8 @@ def microsoft_cognitive(url=None, image_pk=None, save=False):
     return response
 
 
-# @task
-# def sync_firebase():
-#     """Sync firebase."""
-#     return True
+@task
+def sync_firebase(image_pk):
+    """Sync firebase."""
+    image = Image.objects.get(pk=image_pk)
+    return image.sync_firebase()

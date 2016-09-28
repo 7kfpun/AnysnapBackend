@@ -8,6 +8,7 @@ from pygments.formatters import HtmlFormatter
 from pygments.lexers import JsonLexer
 
 from .models import CustomUser, Image, Result, Tag
+from .tasks import sync_firebase
 
 
 class ImageAdmin(DjangoObjectActions, admin.ModelAdmin):
@@ -23,6 +24,17 @@ class ImageAdmin(DjangoObjectActions, admin.ModelAdmin):
         for obj in queryset:
             obj.analyze(True)
 
+    def sync_this(self, request, obj):
+        """Sync Firebase this."""
+        # obj.sync_firebase()
+        sync_firebase.delay(image_pk=obj.pk_str)
+
+    def make_synced(modeladmin, request, queryset):
+        """Make synced."""
+        for obj in queryset:
+            # obj.sync_firebase()
+            sync_firebase.delay(image_pk=obj.pk_str)
+
     def data_prettified(self, instance):
         """Prettify data."""
         response = json.dumps(instance.get_results(), sort_keys=True, indent=2)
@@ -36,8 +48,9 @@ class ImageAdmin(DjangoObjectActions, admin.ModelAdmin):
         return mark_safe(style + response)
 
     list_display = ('url', 'image_tag', 'results_tag')
-    change_actions = ('analyze_this', )
-    actions = ('make_analyzed', )
+    change_actions = ('analyze_this', 'sync_this')
+    actions = ('make_analyzed', 'make_synced')
+    changelist_actions = ('make_synced', )
 
     readonly_fields = ('image_tag', 'data_prettified')
 
