@@ -68,7 +68,7 @@ class Image(models.Model):
 
     def image_tag(self):
         """Image tag."""
-        return format_html('<img src="{}" width="150" height="150" />', self.url)
+        return format_html('<img src="{}" height="100" />', self.url)
 
 
 class Tag(models.Model):
@@ -122,6 +122,10 @@ class Tag(models.Model):
 
     created_datetime = models.DateTimeField(auto_now_add=True)
     modified_datetime = models.DateTimeField(auto_now=True)
+
+    def image_tag(self):
+        """Image tag."""
+        return format_html('<img src="{}" height="100" />', self.image.url)
 
     def __str__(self):
         """__str__."""
