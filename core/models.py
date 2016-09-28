@@ -1,8 +1,10 @@
 import uuid
 
-from django.contrib.postgres.fields import JSONField
-from django.db import models
 from django.contrib.auth.models import AbstractUser
+from django.contrib.postgres.fields import JSONField
+from django.core.cache import cache
+from django.db import models
+from django.utils.html import format_html
 
 
 class CustomUser(AbstractUser):
@@ -18,11 +20,10 @@ class ImageManager(models.Manager):
 
     def create_analytics(self, url, original_uri, user=None):
         """Create analytics."""
-        from .tasks import analyze
         image = self.create(url=url, original_uri=original_uri)
         image.user = user
         image.save()
-        analyze.apply_async((image.id, ))
+        image.analyze()
         return image
 
 
@@ -47,6 +48,27 @@ class Image(models.Model):
     def __str__(self):
         """__str__."""
         return self.url
+
+    @property
+    def pk_str(self):
+        """String pk."""
+        return str(self.pk)
+
+    def analyze(self, save=False):
+        """Analyze."""
+        from .tasks import analyze
+        task = analyze.delay(image_pk=self.pk_str, save=save)
+        cache.set('image-analyze-{}'.format(self.pk_str), task.id, 5 * 60)
+
+    def get_task(self):
+        """Get task."""
+        from .tasks import analyze
+        task_pk = cache.get('image-analyze-{}'.format(self.pk_str))
+        return analyze.AsyncResult(task_pk)
+
+    def image_tag(self):
+        """Image tag."""
+        return format_html('<img src="{}" width="150" height="150" />', self.url)
 
 
 class Tag(models.Model):
@@ -76,6 +98,7 @@ class Tag(models.Model):
         blank=True, null=True
     )
     name = models.CharField(max_length=255)
+    score = models.FloatField(blank=True, null=True)
     category = models.CharField(
         max_length=2,
         choices=CATEGORY_CHOICES,
@@ -94,7 +117,7 @@ class Tag(models.Model):
         related_name="tags",
     )
     locale = models.CharField(max_length=10, default='en')
-    isValid = models.BooleanField(default=True)
+    is_valid = models.BooleanField(default=True)
     payload = JSONField(blank=True, null=True)
 
     created_datetime = models.DateTimeField(auto_now_add=True)
@@ -159,7 +182,7 @@ class Result(models.Model):
         related_query_name="result",
         blank=True, null=True
     )
-    name = models.CharField(max_length=255)
+    name = models.CharField(max_length=255, blank=True, null=True)
     category = models.CharField(
         max_length=2,
         choices=CATEGORY_CHOICES,
@@ -184,7 +207,7 @@ class Result(models.Model):
         related_name="results",
     )
     locale = models.CharField(max_length=10, default='en')
-    isValid = models.BooleanField(default=True)
+    is_valid = models.BooleanField(default=True)
     payload = JSONField(blank=True, null=True)
 
     created_datetime = models.DateTimeField(auto_now_add=True)

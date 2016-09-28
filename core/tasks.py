@@ -1,11 +1,13 @@
 import base64
+import json
 import logging
+import os
 from io import BytesIO
 
 import requests
 from celery import task
 
-from .models import Image, Tag
+from .models import Image, Result, Tag
 
 
 @task(bind=True)
@@ -22,7 +24,7 @@ def add(x, y):
 
 
 @task
-def analyze(url=None, image_pk=None):
+def analyze(url=None, image_pk=None, save=False):
     """Analyze."""
     logging.info('Analyze image')
     if url is None and image_pk is None:
@@ -32,22 +34,22 @@ def analyze(url=None, image_pk=None):
         image = Image.objects.get(id=image_pk)
         url = image.url
 
-    microsoft_cognitive.delay(image_pk=image.pk)
+    microsoft_cognitive.delay(url=url, image_pk=image_pk, save=save)
 
     response = requests.get(url)
     image_byte = BytesIO(response.content).read()
     image_content = base64.b64encode(image_byte).decode('utf-8')
 
     # Async
-    google_vision.delay(url=url, image_content=image_content)
+    google_vision.delay(url=url, image_pk=image_pk, image_content=image_content, save=save)
 
     # Sync
-    # craftar_search(url, image_byte)
+    craftar_search(url=url, image_pk=image_pk, image_byte=image_byte, save=save)
     return True
 
 
 @task
-def craftar_search(url=None, image_pk=None, image_byte=None):
+def craftar_search(url=None, image_pk=None, image_byte=None, save=False):
     """Update."""
     logging.info('CraftAR search')
     if url is None and image_pk is None and image_byte is None:
@@ -70,16 +72,25 @@ def craftar_search(url=None, image_pk=None, image_byte=None):
         'https://search.craftar.net/v1/search',
         files=payload,
     )
-    result = response.json()
+    data = response.json()
 
-    if 'results' in result and result['results']:
-        pass
+    if 'results' in data:
+        image = Image.objects.get(id=image_pk)
+        for craftar_data in data['results']:
+            result = Result(
+                image=image,
+                category=Result.AI,
+                service=Result.CRAFTAR,
+            )
+            if os.getenv('DATABASE_URL', '').startswith('postgres'):
+                result.payload = json.dumps(craftar_data)
+            result.save()
 
-    return result
+    return data
 
 
 @task
-def google_vision(url=None, image_pk=None, image_content=None):
+def google_vision(url=None, image_pk=None, image_content=None, save=False):
     """Google vision."""
     logging.info('Google vision')
     if url is None and image_pk is None and image_content is None:
@@ -125,22 +136,37 @@ def google_vision(url=None, image_pk=None, image_content=None):
 
     result = request.json()
 
-    if 'tags' in result:
-        for tag_data in result['tags']:
-            tag = Tag(
-                image_id=image_pk,
-                name=tag_data.get('name'),
-                category=Tag.AI,
-                service=Tag.MICROSOFT,
-                locale='en',
-                payload=tag_data,
-            )
-            tag.save()
+    if 'responses' in result and image_pk and save:
+        image = Image.objects.get(id=image_pk)
+        image.tags.filter(category=Tag.AI, service=Tag.GOOGLE).delete()
+        for response_data in result['responses']:
+            if 'labelAnnotations' in response_data:
+                for tag_data in response_data['labelAnnotations']:
+                    logging.debug('Google vision Tag: {}'.format(tag_data.get('description')))
+                    tag = Tag(
+                        image=image,
+                        name=tag_data.get('description'),
+                        score=tag_data.get('score'),
+                        category=Tag.AI,
+                        service=Tag.GOOGLE,
+                        locale='en',
+                        is_valid=True,
+                    )
+                    if os.getenv('DATABASE_URL', '').startswith('postgres'):
+                        tag.payload = json.dumps(tag_data)
+                    tag.save()
+
+            elif 'logoAnnotations' in response_data:
+                pass
+
+            elif 'textAnnotations' in response_data:
+                pass
+
     return request.json()
 
 
 @task
-def microsoft_cognitive(url=None, image_pk=None):
+def microsoft_cognitive(url=None, image_pk=None, save=False):
     """Microsoft cognitive."""
     logging.info('Microsoft cognitive')
     if url is None and image_pk is None:
@@ -163,29 +189,49 @@ def microsoft_cognitive(url=None, image_pk=None):
         json=payload
     )
 
-    result = request.json()
+    response = request.json()
 
-    if 'responses' in result:
-        for response_data in result['responses']:
-            if 'labelAnnotations' in response_data:
-                for tag_data in response_data['labelAnnotations']:
-                    tag = Tag(
-                        image_id=image_pk,
-                        name=tag_data.get('description'),
-                        category=Tag.AI,
-                        service=Tag.GOOGLE,
-                        locale='en',
-                        payload=tag_data,
-                    )
-                    tag.save()
+    if 'tags' in response and image_pk and save:
+        image = Image.objects.get(id=image_pk)
+        image.tags.filter(category=Tag.AI, service=Tag.MICROSOFT).delete()
+        for tag_data in response['tags']:
+            logging.debug('Tag: {}'.format(tag_data.get('name')))
+            tag = Tag(
+                image=image,
+                name=tag_data.get('name'),
+                score=tag_data.get('confidence'),
+                category=Tag.AI,
+                service=Tag.MICROSOFT,
+                locale='en',
+                is_valid=True,
+            )
+            if os.getenv('DATABASE_URL', '').startswith('postgres'):
+                tag.payload = json.dumps(tag_data)
+            tag.save()
 
-            elif 'logoAnnotations' in response_data:
-                pass
+        #  if 'adult' in response:
+        #      result, _ = Result.objects.get_or_create(
+        #          image=image,
+        #          category=Result.AI,
+        #          service=Result.MICROSOFT,
+        #          feature=Result.ADULT,
+        #      )
+        #      if os.getenv('DATABASE_URL', '').startswith('postgres'):
+        #          result.payload = json.dumps(result['adult'])
+        #      result.save()
 
-            elif 'textAnnotations' in response_data:
-                pass
+        #  if 'description' in response:
+        #      result, _ = Result.objects.get_or_create(
+        #          image=image,
+        #          category=Result.AI,
+        #          service=Result.MICROSOFT,
+        #          feature=Result.DESCRIPTION,
+        #      )
+        #      if os.getenv('DATABASE_URL', '').startswith('postgres'):
+        #          result.payload = json.dumps(result['description'])
+        #      result.save()
 
-    return result
+    return response
 
 
 # @task

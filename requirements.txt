@@ -1,18 +1,19 @@
 # Django
 Django==1.10.1
+Werkzeug==0.11.11
 dj-database-url==0.4.1
-gunicorn==19.6.0
-psycopg2==2.6.2
-whitenoise==3.2.1
 django-debug-toolbar==1.5
 django-extensions==1.7.4
-Werkzeug==0.11.11
+django-filter
 django-graphiql==0.4.4
 graphene-django>=1.0.dev
-django-filter
+gunicorn==19.6.0
+psycopg2==2.6.2
 requests==2.11.1
--e git://github.com/celery/django-celery@1612037675a25457de067a5ac0d6d511736e130e#egg=django-celery
+whitenoise==3.2.1
+django-pylibmc==0.6.1
 
 # Worker
 celery==3.1.23
 redis==2.10.5
+-e git://github.com/celery/django-celery@1612037675a25457de067a5ac0d6d511736e130e#egg=django-celery
