@@ -26,7 +26,7 @@ class ImageAdmin(DjangoObjectActions, admin.ModelAdmin):
     def data_prettified(self, instance):
         """Prettify data."""
         response = json.dumps(instance.get_results(), sort_keys=True, indent=2)
-        response = response[:5000]
+        response = response[:30000]
 
         formatter = HtmlFormatter(style='colorful')
         response = highlight(response, JsonLexer(), formatter)

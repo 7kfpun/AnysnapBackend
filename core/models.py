@@ -94,7 +94,7 @@ class Image(models.Model):
 
     def results_tag(self):
         """Results_tag."""
-        return json.dumps(self.get_results())
+        return json.dumps(self.get_results())[:2000]
 
 
 class Tag(models.Model):
