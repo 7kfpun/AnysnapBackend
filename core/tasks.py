@@ -140,9 +140,9 @@ def google_vision(url=None, image_pk=None, image_content=None, save=False):
     if 'responses' in result and image_pk and save:
         image = Image.objects.get(id=image_pk)
         image.tags.filter(category=Tag.AI, service=Tag.GOOGLE).delete()
-        for response_data in result['responses']:
-            if 'labelAnnotations' in response_data:
-                for tag_data in response_data['labelAnnotations']:
+        for feature, feature_data in result['responses'][0].items():
+            if feature == 'labelAnnotations':
+                for tag_data in feature_data:
                     logging.debug('Google vision Tag: {}'.format(tag_data.get('description')))
                     tag = Tag(
                         image=image,
@@ -157,11 +157,45 @@ def google_vision(url=None, image_pk=None, image_content=None, save=False):
                         tag.payload = json.dumps(tag_data)
                     tag.save()
 
-            elif 'logoAnnotations' in response_data:
-                pass
+            elif feature == 'logoAnnotations':
+                Result.objects.filter(
+                    image=image,
+                    category=Result.AI,
+                    service=Result.GOOGLE,
+                    feature=Result.LOGO,
+                ).delete()
+                for logo_data in feature_data:
+                    logging.debug('Google vision Logo: {}'.format(logo_data.get('description')))
+                    result = Result.objects.create(
+                        image=image,
+                        name=logo_data.get('description'),
+                        category=Result.AI,
+                        service=Result.GOOGLE,
+                        feature=Result.LOGO,
+                    )
+                    if os.getenv('DATABASE_URL', '').startswith('postgres'):
+                        result.payload = json.dumps(logo_data)
+                    result.save()
 
-            elif 'textAnnotations' in response_data:
-                pass
+            elif feature == 'textAnnotations':
+                Result.objects.filter(
+                    image=image,
+                    category=Result.AI,
+                    service=Result.GOOGLE,
+                    feature=Result.TEXT,
+                ).delete()
+                for text_data in feature_data:
+                    logging.debug('Google vision Text: {}'.format(text_data.get('description')))
+                    result = Result.objects.create(
+                        image=image,
+                        name=text_data.get('description'),
+                        category=Result.AI,
+                        service=Result.GOOGLE,
+                        feature=Result.TEXT,
+                    )
+                    if os.getenv('DATABASE_URL', '').startswith('postgres'):
+                        result.payload = json.dumps(text_data)
+                    result.save()
 
     return request.json()
 
@@ -211,6 +245,17 @@ def microsoft_cognitive(url=None, image_pk=None, save=False):
                     tag.payload = json.dumps(tag_data)
                 tag.save()
 
+        if 'adult' in response:
+            result, _ = Result.objects.get_or_create(
+                image=image,
+                category=Result.AI,
+                service=Result.MICROSOFT,
+                feature=Result.ADULT,
+            )
+            if os.getenv('DATABASE_URL', '').startswith('postgres'):
+                result.payload = json.dumps(response['adult'])
+            result.save()
+
         if 'categories' in response:
             for category in response['categories']:
                 if 'detail' in category and 'celebrities' in category['detail']:
@@ -232,27 +277,42 @@ def microsoft_cognitive(url=None, image_pk=None, save=False):
                             result.payload = json.dumps(celebrity)
                         result.save()
 
-        #  if 'adult' in response:
-        #      result, _ = Result.objects.get_or_create(
-        #          image=image,
-        #          category=Result.AI,
-        #          service=Result.MICROSOFT,
-        #          feature=Result.ADULT,
-        #      )
-        #      if os.getenv('DATABASE_URL', '').startswith('postgres'):
-        #          result.payload = json.dumps(result['adult'])
-        #      result.save()
+        if 'description' in response and 'captions' in response['description']:
+            Result.objects.filter(
+                image=image,
+                category=Result.AI,
+                service=Result.MICROSOFT,
+                feature=Result.DESCRIPTION,
+            ).delete()
+            for caption in response['description']['captions']:
+                result = Result.objects.create(
+                    image=image,
+                    name=caption.get('text'),
+                    category=Result.AI,
+                    service=Result.MICROSOFT,
+                    feature=Result.DESCRIPTION,
+                )
+                if os.getenv('DATABASE_URL', '').startswith('postgres'):
+                    result.payload = json.dumps(caption)
+                result.save()
 
-        #  if 'description' in response:
-        #      result, _ = Result.objects.get_or_create(
-        #          image=image,
-        #          category=Result.AI,
-        #          service=Result.MICROSOFT,
-        #          feature=Result.DESCRIPTION,
-        #      )
-        #      if os.getenv('DATABASE_URL', '').startswith('postgres'):
-        #          result.payload = json.dumps(result['description'])
-        #      result.save()
+        if 'faces' in response:
+            Result.objects.filter(
+                image=image,
+                category=Result.AI,
+                service=Result.MICROSOFT,
+                feature=Result.FACE,
+            ).delete()
+            for face in response['faces']:
+                result = Result.objects.create(
+                    image=image,
+                    category=Result.AI,
+                    service=Result.MICROSOFT,
+                    feature=Result.FACE,
+                )
+                if os.getenv('DATABASE_URL', '').startswith('postgres'):
+                    result.payload = json.dumps(face)
+                result.save()
 
     return response
 

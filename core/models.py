@@ -176,7 +176,7 @@ class Result(models.Model):
     # Microsoft
     CATEGORY = 'CA'
     CELEBRITY = 'CE'
-    DESCRIBE = 'DE'
+    DESCRIPTION = 'DE'
     ADULT = 'AD'
     TEXT = 'TE'
     FACE = 'FA'
@@ -189,7 +189,7 @@ class Result(models.Model):
     FEATURE_CHOICES = (
         (CATEGORY, 'Category'),
         (CELEBRITY, 'Celebrity'),
-        (DESCRIBE, 'Describe'),
+        (DESCRIPTION, 'Description'),
         (ADULT, 'Adult'),
         (TEXT, 'Text'),
         (FACE, 'Face'),
