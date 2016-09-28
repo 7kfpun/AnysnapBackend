@@ -88,8 +88,7 @@ class Image(models.Model):
 
     def results_tag(self):
         """Results_tag."""
-        return '<pre>{}</pre>'.format(json.dumps(self.get_results()))
-        #  return format_html('<pre>{}</pre>'.format(self.get_results()))
+        return json.dumps(self.get_results())
 
 
 class Tag(models.Model):
