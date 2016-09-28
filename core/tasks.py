@@ -229,7 +229,7 @@ def microsoft_cognitive(url=None, image_pk=None, save=False):
                             feature=Result.CELEBRITY,
                         )
                         if os.getenv('DATABASE_URL', '').startswith('postgres'):
-                            result.payload = json.dumps(result['adult'])
+                            result.payload = json.dumps(celebrity)
                         result.save()
 
         #  if 'adult' in response:
