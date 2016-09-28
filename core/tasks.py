@@ -184,7 +184,7 @@ def microsoft_cognitive(url=None, image_pk=None, save=False):
         'url': url
     }
     request = requests.post(
-        'https://api.projectoxford.ai/vision/v1.0/analyze?visualFeatures=Categories,Tags,Description,Faces,Adult',
+        'https://api.projectoxford.ai/vision/v1.0/analyze?visualFeatures=Categories,Tags,Description,Faces,Adult&details=Celebrities',  # noqa
         headers=headers,
         json=payload
     )

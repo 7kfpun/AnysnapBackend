@@ -1,4 +1,5 @@
 import uuid
+import json
 
 from django.contrib.auth.models import AbstractUser
 from django.contrib.postgres.fields import JSONField
@@ -66,9 +67,32 @@ class Image(models.Model):
         task_pk = cache.get('image-analyze-{}'.format(self.pk_str))
         return analyze.AsyncResult(task_pk)
 
+    def get_results(self):
+        """Get results."""
+        return {
+            "tags": [
+                {"score": tag.score, "score": tag.score}
+                for tag in self.tags.filter(is_valid=True)
+            ],
+            "results": [
+                {
+                    "name": result.name,
+                    "category": result.category,
+                    "service": result.service,
+                    "feature": result.feature,
+                }
+                for result in self.results.filter(is_valid=True)
+            ]
+        }
+
     def image_tag(self):
         """Image tag."""
         return format_html('<img src="{}" height="100" />', self.url)
+
+    def results_tag(self):
+        """Results_tag."""
+        return '<pre>{}</pre>'.format(json.dumps(self.get_results()))
+        #  return format_html('<pre>{}</pre>'.format(self.get_results()))
 
 
 class Tag(models.Model):
@@ -129,7 +153,7 @@ class Tag(models.Model):
 
     def __str__(self):
         """__str__."""
-        return self.name
+        return str(self.name)
 
 
 class Result(models.Model):
@@ -196,13 +220,11 @@ class Result(models.Model):
     service = models.CharField(
         max_length=2,
         choices=SERVICE_CHOICES,
-        default=URL,
         blank=True, null=True
     )
     feature = models.CharField(
         max_length=2,
         choices=FEATURE_CHOICES,
-        default=CATEGORY,
         blank=True, null=True
     )
     user = models.ForeignKey(
@@ -219,4 +241,4 @@ class Result(models.Model):
 
     def __str__(self):
         """__str__."""
-        return self.name
+        return str(self.name)

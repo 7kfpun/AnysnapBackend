@@ -17,7 +17,7 @@ class ImageAdmin(DjangoObjectActions, admin.ModelAdmin):
         for obj in queryset:
             obj.analyze(True)
 
-    list_display = ('url', 'image_tag')
+    list_display = ('url', 'image_tag', 'results_tag')
     change_actions = ('analyze_this', )
     actions = ('make_analyzed', )
 
@@ -26,7 +26,7 @@ class TagAdmin(DjangoObjectActions, admin.ModelAdmin):
 
     """TagAdmin."""
 
-    list_display = ('name', 'image_tag')
+    list_display = ('name', 'image_tag', 'score', 'is_valid')
 
 
 # Register your models here.
