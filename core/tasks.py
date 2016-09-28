@@ -79,6 +79,7 @@ def craftar_search(url=None, image_pk=None, image_byte=None, save=False):
         for craftar_data in data['results']:
             result = Result(
                 image=image,
+                name=craftar_data.get('name'),
                 category=Result.AI,
                 service=Result.CRAFTAR,
             )
@@ -191,23 +192,45 @@ def microsoft_cognitive(url=None, image_pk=None, save=False):
 
     response = request.json()
 
-    if 'tags' in response and image_pk and save:
-        image = Image.objects.get(id=image_pk)
-        image.tags.filter(category=Tag.AI, service=Tag.MICROSOFT).delete()
-        for tag_data in response['tags']:
-            logging.debug('Tag: {}'.format(tag_data.get('name')))
-            tag = Tag(
-                image=image,
-                name=tag_data.get('name'),
-                score=tag_data.get('confidence'),
-                category=Tag.AI,
-                service=Tag.MICROSOFT,
-                locale='en',
-                is_valid=True,
-            )
-            if os.getenv('DATABASE_URL', '').startswith('postgres'):
-                tag.payload = json.dumps(tag_data)
-            tag.save()
+    if image_pk and save:
+        if 'tags' in response:
+            image = Image.objects.get(id=image_pk)
+            image.tags.filter(category=Tag.AI, service=Tag.MICROSOFT).delete()
+            for tag_data in response['tags']:
+                logging.debug('Tag: {}'.format(tag_data.get('name')))
+                tag = Tag(
+                    image=image,
+                    name=tag_data.get('name'),
+                    score=tag_data.get('confidence'),
+                    category=Tag.AI,
+                    service=Tag.MICROSOFT,
+                    locale='en',
+                    is_valid=True,
+                )
+                if os.getenv('DATABASE_URL', '').startswith('postgres'):
+                    tag.payload = json.dumps(tag_data)
+                tag.save()
+
+        if 'categories' in response:
+            for category in response['categories']:
+                if 'detail' in category and 'celebrities' in category['detail']:
+                    Result.objects.filter(
+                        image=image,
+                        category=Result.AI,
+                        service=Result.MICROSOFT,
+                        feature=Result.CELEBRITY,
+                    ).delete()
+                    for celebrity in category['detail']['celebrities']:
+                        result = Result.objects.create(
+                            image=image,
+                            name=celebrity.get('name'),
+                            category=Result.AI,
+                            service=Result.MICROSOFT,
+                            feature=Result.CELEBRITY,
+                        )
+                        if os.getenv('DATABASE_URL', '').startswith('postgres'):
+                            result.payload = json.dumps(result['adult'])
+                        result.save()
 
         #  if 'adult' in response:
         #      result, _ = Result.objects.get_or_create(

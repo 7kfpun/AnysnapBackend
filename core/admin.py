@@ -29,8 +29,15 @@ class TagAdmin(DjangoObjectActions, admin.ModelAdmin):
     list_display = ('name', 'image_tag', 'score', 'is_valid')
 
 
+class ResultAdmin(DjangoObjectActions, admin.ModelAdmin):
+
+    """ResultAdmin."""
+
+    list_display = ('name', 'image_tag', 'category', 'service', 'feature', 'is_valid')
+
+
 # Register your models here.
 admin.site.register(CustomUser)
 admin.site.register(Image, ImageAdmin)
 admin.site.register(Tag, TagAdmin)
-admin.site.register(Result)
+admin.site.register(Result, ResultAdmin)

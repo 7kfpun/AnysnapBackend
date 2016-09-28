@@ -70,19 +70,16 @@ class Image(models.Model):
     def get_results(self):
         """Get results."""
         return {
-            "tags": [
-                {"score": tag.score, "score": tag.score}
-                for tag in self.tags.filter(is_valid=True)
-            ],
-            "results": [
-                {
-                    "name": result.name,
-                    "category": result.category,
-                    "service": result.service,
-                    "feature": result.feature,
-                }
-                for result in self.results.filter(is_valid=True)
-            ]
+            "tags": [{
+                "name": tag.name,
+                "score": tag.score,
+            } for tag in self.tags.filter(is_valid=True)],
+            "results": [{
+                "name": result.name,
+                "category": result.category,
+                "service": result.service,
+                "feature": result.feature,
+            } for result in self.results.filter(is_valid=True)]
         }
 
     def image_tag(self):
@@ -149,7 +146,7 @@ class Tag(models.Model):
 
     def image_tag(self):
         """Image tag."""
-        return format_html('<img src="{}" height="100" />', self.image.url)
+        return format_html('<img src="{}" height="80" />', self.image.url)
 
     def __str__(self):
         """__str__."""
@@ -178,6 +175,7 @@ class Result(models.Model):
 
     # Microsoft
     CATEGORY = 'CA'
+    CELEBRITY = 'CE'
     DESCRIBE = 'DE'
     ADULT = 'AD'
     TEXT = 'TE'
@@ -190,6 +188,7 @@ class Result(models.Model):
     URL = 'UR'
     FEATURE_CHOICES = (
         (CATEGORY, 'Category'),
+        (CELEBRITY, 'Celebrity'),
         (DESCRIBE, 'Describe'),
         (ADULT, 'Adult'),
         (TEXT, 'Text'),
@@ -238,6 +237,10 @@ class Result(models.Model):
 
     created_datetime = models.DateTimeField(auto_now_add=True)
     modified_datetime = models.DateTimeField(auto_now=True)
+
+    def image_tag(self):
+        """Image tag."""
+        return format_html('<img src="{}" height="80" />', self.image.url)
 
     def __str__(self):
         """__str__."""
