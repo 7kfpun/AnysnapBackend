@@ -39,7 +39,7 @@ class ImageAdmin(DjangoObjectActions, admin.ModelAdmin):
     change_actions = ('analyze_this', )
     actions = ('make_analyzed', )
 
-    readonly_fields = ('data_prettified',)
+    readonly_fields = ('image_tag', 'data_prettified')
 
     data_prettified.short_description = 'data prettified'
 
