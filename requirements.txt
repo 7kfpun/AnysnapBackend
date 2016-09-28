@@ -12,6 +12,7 @@ psycopg2==2.6.2
 requests==2.11.1
 whitenoise==3.2.1
 django-pylibmc==0.6.1
+pylibmc==1.5.1
 
 # Worker
 celery==3.1.23
