@@ -17,12 +17,12 @@ class ImageAdmin(DjangoObjectActions, admin.ModelAdmin):
 
     def analyze_this(self, request, obj):
         """Analyze this."""
-        obj.analyze(True)
+        obj.analyze(save=True)
 
     def make_analyzed(modeladmin, request, queryset):
         """Make analyzed."""
         for obj in queryset:
-            obj.analyze(True)
+            obj.analyze(save=True)
 
     def sync_this(self, request, obj):
         """Sync Firebase this."""
@@ -31,6 +31,17 @@ class ImageAdmin(DjangoObjectActions, admin.ModelAdmin):
 
     def make_synced(modeladmin, request, queryset):
         """Make synced."""
+        for obj in queryset:
+            # obj.sync_firebase()
+            sync_firebase.delay(image_pk=obj.pk_str)
+
+    def notice_this(self, request, obj):
+        """Notice user about this."""
+        # obj.sync_firebase()
+        sync_firebase.delay(image_pk=obj.pk_str)
+
+    def make_noticed(modeladmin, request, queryset):
+        """Make noticed."""
         for obj in queryset:
             # obj.sync_firebase()
             sync_firebase.delay(image_pk=obj.pk_str)
@@ -48,6 +59,7 @@ class ImageAdmin(DjangoObjectActions, admin.ModelAdmin):
         return mark_safe(style + response)
 
     list_display = ('url', 'image_tag', 'results_tag')
+    list_filter = ('is_recommended', 'is_master', 'is_public', 'is_banned', 'is_analyzed', 'is_synced')
     change_actions = ('analyze_this', 'sync_this')
     actions = ('make_analyzed', 'make_synced')
     changelist_actions = ('make_synced', )

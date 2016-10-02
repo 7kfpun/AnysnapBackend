@@ -53,6 +53,16 @@ class Image(models.Model):
     url = models.CharField(max_length=255)
     original_uri = models.CharField(max_length=1024, blank=True, null=True)
 
+    is_recommended = models.BooleanField(default=False)
+    is_master = models.BooleanField(default=False)
+
+    is_public = models.BooleanField(default=False)
+
+    is_analyzed = models.BooleanField(default=False)
+    is_synced = models.BooleanField(default=False)
+
+    is_banned = models.BooleanField(default=False)
+
     created_datetime = models.DateTimeField(auto_now_add=True)
     modified_datetime = models.DateTimeField(auto_now=True)
 
@@ -72,12 +82,23 @@ class Image(models.Model):
         from .tasks import analyze
         task = analyze.delay(image_pk=self.pk_str, save=save)
         cache.set('image-analyze-{}'.format(self.pk_str), task.id, 5 * 60)
+        return task
 
-    def get_task(self):
+    def get_analytic_task(self):
         """Get task."""
         from .tasks import analyze
         task_pk = cache.get('image-analyze-{}'.format(self.pk_str))
         return analyze.AsyncResult(task_pk)
+
+    def notice(self):
+        """Notice user."""
+        return True
+
+    def sync_firebase(self):
+        """Sync firebase."""
+        db = firebase.database()
+        db.child("results").child(self.pk_str).set(self.get_results())
+        return True
 
     def get_results(self):
         """Get results."""
@@ -96,14 +117,8 @@ class Image(models.Model):
         data["tag"] = [{
             "name": tag.name,
             "score": tag.score,
-        } for tag in self.tags.filter(is_valid=True)],
+        } for tag in self.tags.filter(is_valid=True)]
         return data
-
-    def sync_firebase(self):
-        """Sync firebase."""
-        db = firebase.database()
-        db.child("results").child(self.pk_str).set(self.get_results())
-        return True
 
     def image_tag(self):
         """Image tag."""

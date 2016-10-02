@@ -15,6 +15,27 @@ def create_image(request):
     return None
 
 
+def get_recommended_images(request):
+    """Get recommended images."""
+    images = Image.objects.filter(is_recommended=True)
+    results = [{
+        'id': image.pk,
+        'url': image.url,
+    } for image in images]
+    return JsonResponse({'results': results})
+
+
+def get_public_images(request):
+    """Get public images."""
+    images = Image.objects.filter(is_public=True, is_banned=False)
+    results = [{
+        'id': image.pk,
+        'user_id': image.user.pk,
+        'url': image.url,
+    } for image in images]
+    return JsonResponse({'results': results})
+
+
 def get_images(request, user_id):
     """Get images."""
     if request.method == 'GET':
