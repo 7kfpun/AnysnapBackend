@@ -81,6 +81,7 @@ class ResultAdmin(DjangoObjectActions, admin.ModelAdmin):
     """ResultAdmin."""
 
     list_display = ('name', 'image_tag', 'category', 'service', 'feature', 'is_valid')
+    list_filter = ('category', 'service', 'feature', 'is_valid')
 
 
 # Register your models here.
