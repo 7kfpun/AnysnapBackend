@@ -40,7 +40,7 @@ def get_images(request, user_id):
     """Get images."""
     if request.method == 'GET':
         try:
-            images = Image.objects.filter(user_id=user_id)
+            images = Image.objects.filter(user_id=user_id).order_by('-created_datetime')[:100]
             results = [{
                 'id': image.pk,
                 'user_id': image.user.pk,
