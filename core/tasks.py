@@ -185,6 +185,8 @@ def google_vision(url=None, image_pk=None, image_content=None, save=False):
                     service=Result.GOOGLE,
                     feature=Result.TEXT,
                 ).delete()
+                #  if feature_data:
+                #      feature_data = feature_data[1:]
                 for text_data in feature_data:
                     logging.debug('Google vision Text: {}'.format(text_data.get('description')))
                     result = Result.objects.create(

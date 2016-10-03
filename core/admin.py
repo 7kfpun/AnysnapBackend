@@ -7,8 +7,16 @@ from pygments import highlight
 from pygments.formatters import HtmlFormatter
 from pygments.lexers import JsonLexer
 
-from .models import CustomUser, Image, Result, Tag
+from .models import CustomUser, Image, Notification, Result, Tag
 from .tasks import sync_firebase
+
+
+class UserAdmin(admin.ModelAdmin):
+
+    """UserAdmin."""
+
+    list_display = ('username', 'notification_player_id')
+    list_filter = ('is_superuser', 'is_staff')
 
 
 class ImageAdmin(DjangoObjectActions, admin.ModelAdmin):
@@ -35,16 +43,18 @@ class ImageAdmin(DjangoObjectActions, admin.ModelAdmin):
             # obj.sync_firebase()
             sync_firebase.delay(image_pk=obj.pk_str)
 
-    def notice_this(self, request, obj):
-        """Notice user about this."""
-        # obj.sync_firebase()
-        sync_firebase.delay(image_pk=obj.pk_str)
+    def send_notification_this(self, request, obj):
+        """Send notification this."""
+        if obj.send_notification():
+            obj.is_sent = True
+            obj.save()
 
-    def make_noticed(modeladmin, request, queryset):
-        """Make noticed."""
+    def make_sent_notification(modeladmin, request, queryset):
+        """Make sent notification."""
         for obj in queryset:
-            # obj.sync_firebase()
-            sync_firebase.delay(image_pk=obj.pk_str)
+            if obj.send_notification():
+                obj.is_sent = True
+                obj.save()
 
     def data_prettified(self, instance):
         """Prettify data."""
@@ -54,14 +64,14 @@ class ImageAdmin(DjangoObjectActions, admin.ModelAdmin):
         formatter = HtmlFormatter(style='colorful')
         response = highlight(response, JsonLexer(), formatter)
 
-        style = "<style>" + formatter.get_style_defs() + "</style><br>"
+        style = '<style>' + formatter.get_style_defs() + '</style><br>'
 
         return mark_safe(style + response)
 
     list_display = ('url', 'image_tag', 'results_tag')
     list_filter = ('is_recommended', 'is_master', 'is_public', 'is_banned', 'is_analyzed', 'is_synced')
-    change_actions = ('analyze_this', 'sync_this')
-    actions = ('make_analyzed', 'make_synced')
+    change_actions = ('analyze_this', 'sync_this', 'send_notification_this')
+    actions = ('make_analyzed', 'make_synced', 'make_sent_notification')
     changelist_actions = ('make_synced', )
 
     readonly_fields = ('image_tag', 'data_prettified')
@@ -74,6 +84,7 @@ class TagAdmin(DjangoObjectActions, admin.ModelAdmin):
     """TagAdmin."""
 
     list_display = ('name', 'image_tag', 'score', 'is_valid')
+    list_filter = ('category', 'service', 'is_valid', 'locale')
 
 
 class ResultAdmin(DjangoObjectActions, admin.ModelAdmin):
@@ -84,8 +95,16 @@ class ResultAdmin(DjangoObjectActions, admin.ModelAdmin):
     list_filter = ('category', 'service', 'feature', 'is_valid')
 
 
+class NotificationAdmin(DjangoObjectActions, admin.ModelAdmin):
+
+    """NotificationAdmin."""
+
+    pass
+
+
 # Register your models here.
-admin.site.register(CustomUser)
+admin.site.register(CustomUser, UserAdmin)
 admin.site.register(Image, ImageAdmin)
 admin.site.register(Tag, TagAdmin)
 admin.site.register(Result, ResultAdmin)
+admin.site.register(Notification, NotificationAdmin)

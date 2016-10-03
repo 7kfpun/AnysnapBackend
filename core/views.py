@@ -46,6 +46,8 @@ def get_images(request, user_id):
                 'user_id': image.user.pk,
                 'url': image.url,
                 'original_uri': image.original_uri,
+                'created_datetime': image.created_datetime,
+                'modified_datetime': image.modified_datetime,
             } for image in images]
             return JsonResponse({'results': results})
         except ValueError:
