@@ -65,6 +65,7 @@ def get_images(request, user_id):
         user, _ = CustomUser.objects.get_or_create(id=user_id)
         image.user = user
         image.save()
+        image.analyze(save=True)
         results = [{
             'id': image.pk,
             'user_id': image.user.pk,
