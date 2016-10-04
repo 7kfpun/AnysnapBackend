@@ -68,7 +68,7 @@ class ImageAdmin(DjangoObjectActions, admin.ModelAdmin):
 
         return mark_safe(style + response)
 
-    list_display = ('url', 'image_tag', 'results_tag')
+    list_display = ('image_tag', 'user', 'results_tag')
     list_filter = ('is_recommended', 'is_master', 'is_public', 'is_banned', 'is_analyzed', 'is_synced')
     change_actions = ('analyze_this', 'sync_this', 'send_notification_this')
     actions = ('make_analyzed', 'make_synced', 'make_sent_notification')

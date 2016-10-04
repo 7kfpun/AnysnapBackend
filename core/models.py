@@ -158,7 +158,7 @@ class Image(models.Model):
 
     def results_tag(self):
         """Results_tag."""
-        return json.dumps(self.get_results())[:1000]
+        return json.dumps(self.get_results())[:600]
 
     def __str__(self):
         """__str__."""
