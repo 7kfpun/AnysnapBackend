@@ -45,6 +45,8 @@ def analyze(url=None, image_pk=None, save=False):
 
     # Sync
     craftar_search(url=url, image_pk=image_pk, image_byte=image_byte, save=save)
+    if image_pk:
+        sync_firebase.delay(image_pk=image_pk)
     return True
 
 
@@ -87,6 +89,8 @@ def craftar_search(url=None, image_pk=None, image_byte=None, save=False):
             if os.getenv('DATABASE_URL', '').startswith('postgres'):
                 result.payload = json.dumps(craftar_data)
             result.save()
+
+        sync_firebase.delay(image_pk=image_pk)
 
     return data
 
@@ -199,6 +203,8 @@ def google_vision(url=None, image_pk=None, image_content=None, save=False):
                     if os.getenv('DATABASE_URL', '').startswith('postgres'):
                         result.payload = json.dumps(text_data)
                     result.save()
+
+        sync_firebase.delay(image_pk=image_pk)
 
     return request.json()
 
@@ -316,6 +322,8 @@ def microsoft_cognitive(url=None, image_pk=None, save=False):
                 if os.getenv('DATABASE_URL', '').startswith('postgres'):
                     result.payload = json.dumps(face)
                 result.save()
+
+        sync_firebase.delay(image_pk=image_pk)
 
     return response
 
