@@ -75,17 +75,25 @@ def get_images(request, user_id):
         return JsonResponse({'results': results})
 
 
+@csrf_exempt
 def get_image(request, user_id, image_id):
     """Get image."""
-    try:
-        images = Image.objects.filter(user_id=user_id, id=image_id)
-        results = [{
-            'id': image.pk,
-            'user_id': image.user.pk,
-            'url': image.url,
-            'original_uri': image.original_uri,
-            'tags': list(image.tags.order_by('-score').values_list('name', flat=True)),
-        } for image in images]
-        return JsonResponse({'results': results})
-    except ValueError:
-        return JsonResponse({'results': []})
+    if request.method == 'GET':
+        try:
+            images = Image.objects.filter(user_id=user_id, id=image_id)
+            results = [{
+                'id': image.pk,
+                'user_id': image.user.pk,
+                'url': image.url,
+                'original_uri': image.original_uri,
+                'tags': list(image.tags.order_by('-score').values_list('name', flat=True)),
+            } for image in images]
+            return JsonResponse({'results': results})
+        except ValueError:
+            return JsonResponse({'results': []})
+    elif request.method == 'DELETE':
+        try:
+            image = Image.objects.get(user_id=user_id, id=image_id)
+            return JsonResponse({'results': 'success'})
+        except ValueError:
+            return JsonResponse({'results': 'failure'})
