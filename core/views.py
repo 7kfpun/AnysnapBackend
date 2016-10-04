@@ -62,7 +62,7 @@ def get_images(request, user_id):
             original_uri=data.get('original_uri'),
         )
 
-        user, _ = CustomUser.objects.get_or_create(id=data.get('user_id'))
+        user, _ = CustomUser.objects.get_or_create(id=user_id)
         image.user = user
         image.save()
         results = [{
