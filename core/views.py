@@ -66,6 +66,7 @@ def get_images(request, user_id):
         image.user = user
         image.save()
         image.analyze(save=True)
+        image.sync_firebase()
         results = [{
             'id': image.pk,
             'user_id': image.user.pk,
