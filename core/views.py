@@ -42,7 +42,7 @@ def get_images(request, user_id):
     """Get images."""
     if request.method == 'GET':
         try:
-            images = Image.objects.filter(user_id=user_id).order_by('-created_datetime')[:100]
+            images = Image.objects.filter(user_id=user_id, is_deleted=False).order_by('-created_datetime')[:100]
             results = [{
                 'id': image.pk,
                 'user_id': image.user.pk,
@@ -80,7 +80,7 @@ def get_image(request, user_id, image_id):
     """Get image."""
     if request.method == 'GET':
         try:
-            images = Image.objects.filter(user_id=user_id, id=image_id)
+            images = Image.objects.filter(user_id=user_id, id=image_id, is_deleted=False)
             results = [{
                 'id': image.pk,
                 'user_id': image.user.pk,
@@ -93,7 +93,9 @@ def get_image(request, user_id, image_id):
             return JsonResponse({'results': []})
     elif request.method == 'DELETE':
         try:
-            image = Image.objects.get(user_id=user_id, id=image_id)
+            image = Image.objects.get(user_id=user_id, id=image_id, is_deleted=False)
+            image.is_deleted = True
+            image.save()
             return JsonResponse({'results': 'success'})
         except ValueError:
             return JsonResponse({'results': 'failure'})

@@ -69,6 +69,8 @@ class Image(models.Model):
 
     is_banned = models.BooleanField(default=False)
 
+    is_deleted = models.BooleanField(default=False)
+
     created_datetime = models.DateTimeField(auto_now_add=True)
     modified_datetime = models.DateTimeField(auto_now=True)
 
