@@ -1,6 +1,7 @@
 import json
 
 from django.http import HttpResponse, JsonResponse
+from django.views.decorators.csrf import csrf_exempt
 
 from .models import CustomUser, Image
 
@@ -36,6 +37,7 @@ def get_public_images(request):
     return JsonResponse({'results': results})
 
 
+@csrf_exempt
 def get_images(request, user_id):
     """Get images."""
     if request.method == 'GET':
@@ -68,7 +70,6 @@ def get_images(request, user_id):
             'user_id': image.user.pk,
             'url': image.url,
             'original_uri': image.original_uri,
-            'tags': list(image.tags.order_by('-score').values_list('name', flat=True)),
         }]
         return JsonResponse({'results': results})
 
