@@ -126,6 +126,9 @@ class Image(models.Model):
             }
             payload['data'] = {
                 'id': self.pk_str,
+                'url': self.url,
+                'user_id': self.user.pk_str,
+                'original_uri': self.original_uri,
             }
 
             request = requests.post(
