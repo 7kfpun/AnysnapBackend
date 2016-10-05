@@ -19,6 +19,19 @@ class UserAdmin(admin.ModelAdmin):
     list_filter = ('is_superuser', 'is_staff')
 
 
+class ResultInline(admin.TabularInline):
+
+    """ResultInline."""
+
+    model = Result
+    exclude = ['service', 'payload']
+
+    def get_queryset(self, request):
+        """get_queryset."""
+        qs = super(ResultInline, self).get_queryset(request)
+        return qs.filter(category=Result.HUMAN)
+
+
 class ImageAdmin(DjangoObjectActions, admin.ModelAdmin):
 
     """ImageAdmin."""
@@ -68,8 +81,13 @@ class ImageAdmin(DjangoObjectActions, admin.ModelAdmin):
 
         return mark_safe(style + response)
 
-    list_display = ('image_tag', 'user', 'results_tag')
-    list_filter = ('is_recommended', 'is_master', 'is_public', 'is_banned', 'is_analyzed', 'is_synced')
+    inlines = [ResultInline]
+
+    list_display = ('image_tag', 'user', 'created_datetime',
+                    'is_banned', 'is_analyzed', 'is_synced', 'is_sent_notification',
+                    'results_tag')
+    list_filter = ('is_recommended', 'is_master', 'is_public',
+                   'is_banned', 'is_analyzed', 'is_synced', 'is_sent_notification')
     change_actions = ('analyze_this', 'sync_this', 'send_notification_this')
     actions = ('make_analyzed', 'make_synced', 'make_sent_notification')
     changelist_actions = ('make_synced', )

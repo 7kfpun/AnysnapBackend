@@ -67,6 +67,7 @@ class Image(models.Model):
 
     is_analyzed = models.BooleanField(default=False)
     is_synced = models.BooleanField(default=False)
+    is_sent_notification = models.BooleanField(default=False)
 
     is_banned = models.BooleanField(default=False)
 
@@ -76,6 +77,8 @@ class Image(models.Model):
     modified_datetime = models.DateTimeField(auto_now=True)
 
     objects = ImageManager()
+
+    ordering = ('-created_datetime',)
 
     @property
     def pk_str(self):
@@ -115,7 +118,13 @@ class Image(models.Model):
             payload = {
                 'app_id': 'dc288eac-7909-4101-81ec-53720528d547',
                 'contents': {'en': 'New message received'},
-                'include_player_ids': [self.user.notification_player_id],
+                #  'include_player_ids': [self.user.notification_player_id],
+                'include_segments': ['All'],
+                'filters': [
+                    {'field': 'tag', 'key': 'UNIQUEID', 'relation': '=', 'value': self.user.pk_str.upper()},
+                    {'operator': 'OR'},
+                    {'field': 'tag', 'key': 'UNIQUEID', 'relation': '=', 'value': self.user.pk_str.lower()},
+                ]
             }
             payload['data'] = {
                 'id': self.pk_str,
@@ -128,7 +137,7 @@ class Image(models.Model):
             )
             request_json = request.json()
             if 'id' in request_json:
-                self.is_sent = True
+                self.is_sent_notification = True
                 self.save()
             return request_json
         return False
@@ -167,7 +176,7 @@ class Image(models.Model):
 
     def results_tag(self):
         """Results_tag."""
-        return json.dumps(self.get_results())[:600]
+        return json.dumps(self.get_results())[:200]
 
     def __str__(self):
         """__str__."""
@@ -302,7 +311,7 @@ class Result(models.Model):
     category = models.CharField(
         max_length=2,
         choices=CATEGORY_CHOICES,
-        default=AI,
+        default=HUMAN,
         blank=True, null=True
     )
     service = models.CharField(
@@ -313,6 +322,7 @@ class Result(models.Model):
     feature = models.CharField(
         max_length=2,
         choices=FEATURE_CHOICES,
+        default=URL,
         blank=True, null=True
     )
     user = models.ForeignKey(
