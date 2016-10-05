@@ -170,9 +170,13 @@ class Image(models.Model):
             } for tag in self.tags.filter(is_valid=True).order_by('-score')]
         return data
 
-    def image_tag(self):
+    def image_small_tag(self):
         """Image tag."""
         return format_html('<img src="{}" height="100" />', self.url)
+
+    def image_large_tag(self):
+        """Image tag."""
+        return format_html('<img src="{}" height="400" />', self.url)
 
     def results_tag(self):
         """Results_tag."""

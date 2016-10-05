@@ -77,13 +77,15 @@ class ImageAdmin(DjangoObjectActions, admin.ModelAdmin):
         formatter = HtmlFormatter(style='colorful')
         response = highlight(response, JsonLexer(), formatter)
 
+        button = '<button type="button" onclick="django.jQuery(\'.highlight\').toggle()">Click Me!</button>'
+        script = '<script>django.jQuery(\'.highlight\').toggle()</script>'
         style = '<style>' + formatter.get_style_defs() + '</style><br>'
 
-        return mark_safe(style + response)
+        return mark_safe(style + button + response + script)
 
     inlines = [ResultInline]
 
-    list_display = ('image_tag', 'user', 'created_datetime',
+    list_display = ('image_small_tag', 'user', 'created_datetime',
                     'is_banned', 'is_analyzed', 'is_synced', 'is_sent_notification',
                     'results_tag')
     list_filter = ('is_recommended', 'is_master', 'is_public',
@@ -92,7 +94,7 @@ class ImageAdmin(DjangoObjectActions, admin.ModelAdmin):
     actions = ('make_analyzed', 'make_synced', 'make_sent_notification')
     changelist_actions = ('make_synced', )
 
-    readonly_fields = ('image_tag', 'data_prettified')
+    readonly_fields = ('image_large_tag', 'data_prettified')
 
     data_prettified.short_description = 'data prettified'
 
