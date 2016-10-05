@@ -148,10 +148,12 @@ class Image(models.Model):
         data = dict((k, list(g)) for k, g in groupby(sorted(results, key=keyfn), keyfn))
 
         if os.getenv('DATABASE_URL', '').startswith('postgres'):
+            tag_ids = self.tags.filter(is_valid=True).order_by('name', '-score') \
+                .distinct('name').values_list('id', flat=True)
             data['tag'] = [{
                 'name': tag.name,
                 'score': tag.score,
-            } for tag in self.tags.filter(is_valid=True).order_by('-score', 'name').distinct('name')]
+            } for tag in self.tags.filter(id__in=tag_ids).order_by('-score')]
         else:
             data['tag'] = [{
                 'name': tag.name,
