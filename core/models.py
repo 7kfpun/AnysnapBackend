@@ -1,4 +1,5 @@
 import json
+import os
 import uuid
 from itertools import groupby
 
@@ -146,10 +147,16 @@ class Image(models.Model):
             return x['feature'].lower()
         data = dict((k, list(g)) for k, g in groupby(sorted(results, key=keyfn), keyfn))
 
-        data['tag'] = [{
-            'name': tag.name,
-            'score': tag.score,
-        } for tag in self.tags.filter(is_valid=True)]
+        if os.getenv('DATABASE_URL', '').startswith('postgres'):
+            data['tag'] = [{
+                'name': tag.name,
+                'score': tag.score,
+            } for tag in self.tags.filter(is_valid=True).order_by('-score').distinct('name')]
+        else:
+            data['tag'] = [{
+                'name': tag.name,
+                'score': tag.score,
+            } for tag in self.tags.filter(is_valid=True).order_by('-score')]
         return data
 
     def image_tag(self):
