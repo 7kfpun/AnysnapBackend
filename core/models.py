@@ -151,7 +151,7 @@ class Image(models.Model):
             data['tag'] = [{
                 'name': tag.name,
                 'score': tag.score,
-            } for tag in self.tags.filter(is_valid=True).order_by('-score').distinct('name')]
+            } for tag in self.tags.filter(is_valid=True).order_by('-score', 'name').distinct('name')]
         else:
             data['tag'] = [{
                 'name': tag.name,
