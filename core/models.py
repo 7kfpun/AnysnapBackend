@@ -98,14 +98,12 @@ class Image(models.Model):
         task_pk = cache.get('image-analyze-{}'.format(self.pk_str))
         return analyze.AsyncResult(task_pk)
 
-    def notice(self):
-        """Notice user."""
-        return True
-
     def sync_firebase(self):
         """Sync firebase."""
         db = firebase.database()
         db.child('results').child(self.pk_str).set(self.get_results())
+        self.is_synced = True
+        self.save()
         return True
 
     def send_notification(self):
