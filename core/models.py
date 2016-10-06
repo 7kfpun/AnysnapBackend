@@ -115,7 +115,7 @@ class Image(models.Model):
             }
             payload = {
                 'app_id': 'dc288eac-7909-4101-81ec-53720528d547',
-                'contents': {'en': 'New message received'},
+                'contents': {'en': 'New notification received'},
                 #  'include_player_ids': [self.user.notification_player_id],
                 'include_segments': ['All'],
                 'filters': [
@@ -129,6 +129,8 @@ class Image(models.Model):
                 'url': self.url,
                 'user_id': self.user.pk_str,
                 'original_uri': self.original_uri,
+                'created_datetime': self.created_datetime,
+                'modified_datetime': self.modified_datetime,
             }
 
             request = requests.post(
