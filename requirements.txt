@@ -18,6 +18,6 @@ pygments==2.1.3
 pyrebase==3.0.15
 
 # Worker
-celery==3.1.23
+celery==3.1.24
 redis==2.10.5
--e git://github.com/celery/django-celery@1612037675a25457de067a5ac0d6d511736e130e#egg=django-celery
+-e git://github.com/celery/django-celery@216e173687326ef05a8a0d2feda8f51ffd11ba5d#egg=django-celery

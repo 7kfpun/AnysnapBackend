@@ -179,7 +179,7 @@ db_from_env = dj_database_url.config(conn_max_age=500)
 DATABASES['default'].update(db_from_env)
 
 BROKER_URL = os.getenv('REDIS_URL', 'redis://localhost:6379')
-BROKER_POOL_LIMIT = 5
+BROKER_POOL_LIMIT = 30
 BROKER_CONNECTION_MAX_RETRIES = None
 
 CELERY_TASK_SERIALIZER = "json"
