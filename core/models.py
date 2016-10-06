@@ -129,8 +129,8 @@ class Image(models.Model):
                 'url': self.url,
                 'user_id': self.user.pk_str,
                 'original_uri': self.original_uri,
-                'created_datetime': self.created_datetime,
-                'modified_datetime': self.modified_datetime,
+                'created_datetime': self.created_datetime.isoformat(),
+                'modified_datetime': self.modified_datetime.isoformat(),
             }
 
             request = requests.post(
