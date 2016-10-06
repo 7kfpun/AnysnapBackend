@@ -90,6 +90,8 @@ class ImageAdmin(DjangoObjectActions, admin.ModelAdmin):
                     'results_tag')
     list_filter = ('is_recommended', 'is_master', 'is_public',
                    'is_banned', 'is_analyzed', 'is_synced', 'is_sent_notification')
+    ordering = ('-created_datetime',)
+
     change_actions = ('analyze_this', 'sync_this', 'send_notification_this')
     actions = ('make_analyzed', 'make_synced', 'make_sent_notification')
     changelist_actions = ('make_synced', )
