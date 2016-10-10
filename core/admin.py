@@ -114,8 +114,9 @@ class ResultAdmin(DjangoObjectActions, admin.ModelAdmin):
 
     """ResultAdmin."""
 
-    list_display = ('name', 'image_tag', 'category', 'service', 'feature', 'is_valid')
+    list_display = ('name', 'image_tag', 'created_datetime', 'category', 'service', 'feature', 'is_valid')
     list_filter = ('category', 'service', 'feature', 'is_valid')
+    ordering = ('-created_datetime',)
 
 
 class NotificationAdmin(DjangoObjectActions, admin.ModelAdmin):
