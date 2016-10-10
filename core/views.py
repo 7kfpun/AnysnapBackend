@@ -3,7 +3,7 @@ import json
 from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
-from .models import CustomUser, Image
+from .models import CustomUser, Image, Notification, Result
 
 
 def index(request):
@@ -100,3 +100,57 @@ def get_image(request, user_id, image_id):
             return JsonResponse({'results': 'success'})
         except ValueError:
             return JsonResponse({'results': 'failure'})
+
+
+@csrf_exempt
+def get_notifications(request, user_id):
+    """Get notifications."""
+    if request.method == 'GET':
+        try:
+            notifications = Notification.objects \
+                .filter(user_id=user_id, is_deleted=False) \
+                .order_by('-created_datetime')[:100]
+            results = [{
+            } for notification in notifications]
+            return JsonResponse({'results': results})
+        except ValueError:
+            return JsonResponse({'results': {}})
+
+
+@csrf_exempt
+def results_endpoint(request, user_id, image_id):
+    """Get results."""
+    if request.method == 'GET':
+        try:
+            image = Image.objects.get(user_id=user_id, is_deleted=False, id=image_id)
+            return JsonResponse({'results': image.get_results()})
+        except ValueError:
+            return JsonResponse({'results': {}})
+
+    elif request.method == 'POST':
+        try:
+            image = Image.objects.get(user_id=user_id, is_deleted=False, id=image_id)
+
+            data = json.loads(request.body.decode("utf-8"))
+            if data.get('payload'):
+                Result.objects.create(
+                    image_id=image_id,
+                    category=Result.HUMAN,
+                    name=data.get('payload', {}).get('type'),
+                    feature=Result.CODE,
+                    user_id=user_id,
+                    payload=data.get('payload'),
+                )
+                image.sync_firebase()
+
+            return JsonResponse({'results': image.get_results()})
+        except ValueError:
+            return JsonResponse({'results': {}})
+
+        results = [{
+            'id': image.pk,
+            'user_id': image.user.pk,
+            'url': image.url,
+            'original_uri': image.original_uri,
+        }]
+        return JsonResponse({'results': results})

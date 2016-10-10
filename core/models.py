@@ -289,6 +289,8 @@ class Result(models.Model):
     MAP = 'MA'
     PHONE = 'PH'
     URL = 'UR'
+    CODE = 'CO'
+
     FEATURE_CHOICES = (
         (CATEGORY, 'Category'),
         (CELEBRITY, 'Celebrity'),
@@ -304,6 +306,7 @@ class Result(models.Model):
         (MAP, 'Map'),
         (PHONE, 'Phone'),
         (URL, 'Url'),
+        (CODE, 'Code'),
     )
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)

@@ -87,6 +87,7 @@ class ImageAdmin(DjangoObjectActions, admin.ModelAdmin):
 
     list_display = ('image_small_tag', 'user', 'created_datetime',
                     'is_banned', 'is_analyzed', 'is_synced', 'is_sent_notification',
+                    'is_deleted',
                     'results_tag')
     list_filter = ('is_recommended', 'is_master', 'is_public',
                    'is_banned', 'is_analyzed', 'is_synced', 'is_sent_notification')
