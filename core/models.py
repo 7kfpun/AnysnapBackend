@@ -147,31 +147,34 @@ class Image(models.Model):
 
     def get_results(self):
         """Get results."""
-        results = [{
-            'name': result.name,
-            'category': result.get_category_display(),
-            'service': result.get_service_display(),
-            'feature': result.get_feature_display(),
-            'payload': json.loads(result.payload) if result.payload else result.payload,
-        } for result in self.results.filter(is_valid=True)]
+        try:
+            results = [{
+                'name': result.name,
+                'category': result.get_category_display(),
+                'service': result.get_service_display(),
+                'feature': result.get_feature_display(),
+                'payload': json.loads(result.payload) if result.payload else result.payload,
+            } for result in self.results.filter(is_valid=True)]
 
-        def keyfn(x):
-            return x['feature'].lower()
-        data = dict((k, list(g)) for k, g in groupby(sorted(results, key=keyfn), keyfn))
+            def keyfn(x):
+                return x['feature'].lower()
+            data = dict((k, list(g)) for k, g in groupby(sorted(results, key=keyfn), keyfn))
 
-        if os.getenv('DATABASE_URL', '').startswith('postgres'):
-            tag_ids = self.tags.filter(is_valid=True).order_by('name', '-score') \
-                .distinct('name').values_list('id', flat=True)
-            data['tag'] = [{
-                'name': tag.name,
-                'score': tag.score,
-            } for tag in self.tags.filter(id__in=tag_ids).order_by('-score')]
-        else:
-            data['tag'] = [{
-                'name': tag.name,
-                'score': tag.score,
-            } for tag in self.tags.filter(is_valid=True).order_by('-score')]
-        return data
+            if os.getenv('DATABASE_URL', '').startswith('postgres'):
+                tag_ids = self.tags.filter(is_valid=True).order_by('name', '-score') \
+                    .distinct('name').values_list('id', flat=True)
+                data['tag'] = [{
+                    'name': tag.name,
+                    'score': tag.score,
+                } for tag in self.tags.filter(id__in=tag_ids).order_by('-score')]
+            else:
+                data['tag'] = [{
+                    'name': tag.name,
+                    'score': tag.score,
+                } for tag in self.tags.filter(is_valid=True).order_by('-score')]
+            return data
+        except TypeError as err:
+            return {'error': str(err)}
 
     def image_small_tag(self):
         """Image tag."""

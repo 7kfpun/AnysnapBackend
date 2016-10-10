@@ -139,7 +139,7 @@ def results_endpoint(request, user_id, image_id):
                     name=data.get('payload', {}).get('type'),
                     feature=Result.CODE,
                     user_id=user_id,
-                    payload=data.get('payload'),
+                    payload=json.dumps(data.get('payload')),
                 )
                 image.sync_firebase()
 
