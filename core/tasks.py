@@ -10,6 +10,9 @@ from celery import task
 from .models import Image, Result, Tag
 
 
+access_token = None
+
+
 @task(bind=True)
 def debug_task(self):
     """debug_task."""
@@ -34,7 +37,10 @@ def analyze(url=None, image_pk=None, save=False):
         image = Image.objects.get(id=image_pk)
         url = image.url
 
+    # Async
     microsoft_cognitive.delay(url=url, image_pk=image_pk, save=save)
+    clarifai.delay(url=url, image_pk=image_pk, save=save, language='en')
+    clarifai.delay(url=url, image_pk=image_pk, save=save, language='zh-TW')
 
     response = requests.get(url)
     image_byte = BytesIO(response.content).read()
@@ -326,6 +332,79 @@ def microsoft_cognitive(url=None, image_pk=None, save=False):
         sync_firebase.delay(image_pk=image_pk)
 
     return response
+
+
+def get_clarifai_token():
+    """Get Clarifai token."""
+    clarifai_id = 'BMNVWaGE8jCZWJGZosna0_pwJBNZ9XNAy97UvP0K'
+    clarifai_secret = 'tdtyqN8S0zWYWDLqc1lixq4gWKsZFs5kqlbQvCU2'
+    auth = (clarifai_id, clarifai_secret)
+    payload = {
+        'grant_type': 'client_credentials',
+    }
+    response = requests.post(
+        'https://api.clarifai.com/v1/token/',
+        auth=auth,
+        data=payload,
+    )
+    data = response.json()
+    logging.info(data)
+    return data.get('access_token')
+
+
+@task
+def clarifai_search(url=None, image_pk=None, save=False, language='en'):
+    """Clarifai search."""
+    logging.info('Clarifai search')
+    if url is None and image_pk is None:
+        return True
+
+    if url is None:
+        image = Image.objects.get(id=image_pk)
+        url = image.url
+
+    global access_token
+    if not access_token:
+        access_token = get_clarifai_token()
+
+    headers = {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer {}'.format(access_token)
+    }
+    response = requests.get(
+        'https://api.clarifai.com/v1/tag/?model=general-v1.3&url={}&language={}'.format(url, language),
+        headers=headers,
+    )
+    data = response.json()
+    logging.info(data)
+
+    if image_pk and save:
+        if data.get('status_code') == 'OK':
+            image = Image.objects.get(id=image_pk)
+            classes = data['results'][0]['result']['tag']['classes']
+            probs = data['results'][0]['result']['tag']['probs']
+            concept_ids = data['results'][0]['result']['tag']['concept_ids']
+            for name, prob, concept_id in zip(classes, probs, concept_ids):
+                tag = Tag(
+                    image=image,
+                    name=name,
+                    score=prob,
+                    category=Tag.AI,
+                    service=Tag.CLARIFAI,
+                    locale=language,
+                    is_valid=True,
+                )
+                if os.getenv('DATABASE_URL', '').startswith('postgres'):
+                    tag.payload = json.dumps({
+                        'class': name,
+                        'prob': prob,
+                        'concept_id': concept_id,
+                    })
+                tag.save()
+
+        sync_firebase.delay(image_pk=image_pk)
+
+    return data
 
 
 @task
