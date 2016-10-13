@@ -39,8 +39,8 @@ def analyze(url=None, image_pk=None, save=False):
 
     # Async
     microsoft_cognitive.delay(url=url, image_pk=image_pk, save=save)
-    clarifai.delay(url=url, image_pk=image_pk, save=save, language='en')
-    clarifai.delay(url=url, image_pk=image_pk, save=save, language='zh-TW')
+    clarifai_search.delay(url=url, image_pk=image_pk, save=save, language='en')
+    clarifai_search.delay(url=url, image_pk=image_pk, save=save, language='zh-TW')
 
     response = requests.get(url)
     image_byte = BytesIO(response.content).read()
