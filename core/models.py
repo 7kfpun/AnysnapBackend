@@ -206,9 +206,11 @@ class Tag(models.Model):
 
     GOOGLE = 'GO'
     MICROSOFT = 'MI'
+    CLARIFAI = 'CL'
     SERVICE_CHOICES = (
         (GOOGLE, 'Google Vision'),
         (MICROSOFT, 'Microsoft Cognitive'),
+        (CLARIFAI, 'Clarifai'),
     )
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
